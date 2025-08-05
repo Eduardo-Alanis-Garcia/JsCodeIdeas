@@ -1,0 +1,19 @@
+      const html = `
+        <div class="card" style="margin-top: 24px;">
+          <div style="border-radius: 8px 8px 0px 0px;height: 3vh;padding: 0px;margin: -4px -16px; background-color: #000000;"></div>
+          ${titulo_final}
+          ${texto_final}
+            <div class="info" style="display: flex; justify-content: space-between; text-align: left;">
+              <div style="width: 50%;">
+              <span><strong>${p.TIPACCID} – ${p.CLASE} </strong> </span>
+              <span style="padding-top: 10px;"> ${fecha_actualizacion}</span>
+              <span style="padding-top: 10px;">${p.NOM_MUN}, Hidalgo</span>
+              </div>
+              <div style="width: 40%; text-align: center;">
+                  ${generoHtml}
+                <span> <strong>Posible causa:</strong> ${p.CAUSAACCI} </span>
+                <span Responsable:</strong> ${responsable} </span>
+              </div>
+            </div>
+        </div>
+      `;

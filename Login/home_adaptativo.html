@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reporte de Colisión</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff;
+      display: flex;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .container {
+      border: 6px solid #e60000;
+      padding: 20px;
+      width: 400px;
+      text-align: center;
+    }
+    .header, .footer, .sub-header {
+      background-color: #e60000;
+      color: white;
+      font-weight: bold;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .icon {
+      width: 100px;
+    }
+    .informacion {
+      display: flex;
+      margin-top: 0px;
+      height: 160px;
+    }
+    .izquierda {
+      width: 20%;
+      height: 100%;
+    }
+    .derecha {
+      width: 80%;
+      text-align: left;
+      padding-left: 10px;
+    }
+    .cause {
+      font-weight: bold;
+      color: #ff0000;
+      font-size: 18px;
+    }
+    .details {
+      font-size: 17px;
+      margin-bottom: 10px;
+    }
+    .id_conductor, .placas, .ruta, .date-time {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    .location {
+      font-size: 20px;
+      margin-top: 20px;
+      border-top: 4px solid #e60000;
+      padding-top: 10px;
+      font-weight: bold;
+    }
+    
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">VEHÍCULOS INVOLUCRADOS</div>
+
+    <div class="icon"><img src="img/Iconos/lesionado.png" style="height: auto;"></div>
+
+    <div class="sub-header">Colisión con vehículo automotor - Sólo daños</div>
+    <div class="informacion">
+      <div class="izquierda">
+        <img src="img/Iconos/hombre.png" height="100%" >
+      </div>
+      <div class="derecha">
+        <div class="cause">Posible causa:</div>
+        <div class="details">Conductor hombre 38 años</div>
+        <div class="id_conductor"><strong>ID: </strong>123456789</div>
+        <div class="placas"><strong>Placa: </strong> PLA-123</div>
+        <div class="ruta"><strong>Ruta: </strong>Av. López Mateos</div>
+        <div class="date-time"><strong>Fecha: </strong>23/12/2023 &nbsp; 16:00 h</div>
+      </div>
+      </div>
+    <div class="location">Pachuca de Soto, Hidalgo</div>
+  </div>
+</body>
+</html>
