@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chart.js Fullscreen</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="myChart"></canvas>
+
+  <script>
+    const labels = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', "Agosto"];
+
+    const data = {
+      labels: labels,
+      datasets: [{
+        label: 'My First Dataset',
+        data: [65, 59, 80, 81, 56, 55, 40, null], // agosto en null
+        backgroundColor: 'rgba(75,192,192,0.2)',
+        borderColor: 'rgba(75,192,192,1)',
+        borderWidth: 1
+      }]
+    };
+
+    // Plugin para línea vertical punteada y texto rotado
+    const lineaVerticalPlugin = {
+      id: 'lineaVerticalPlugin',
+      afterDatasetsDraw(chart) {
+        const {ctx, scales: {x, y}} = chart;
+        const indexAgosto = data.labels.indexOf("Agosto");
+
+        if (indexAgosto === -1) return;
+
+        const xPos = x.getPixelForTick(indexAgosto);
+
+        ctx.save();
+
+        // Dibujar línea vertical punteada
+        ctx.beginPath();
+        ctx.setLineDash([6, 6]);   // punteada (6px dibuja, 6px espacio)
+        ctx.moveTo(xPos, y.top);
+        ctx.lineTo(xPos, y.bottom);
+        ctx.strokeStyle = "red";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Dibujar texto rotado sobre la línea
+        ctx.setLineDash([]); // quitar punteado
+        ctx.fillStyle = "red";
+        ctx.font = "bold 14px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        const yMiddle = (y.top + y.bottom) / 2; 
+        ctx.translate(xPos - 15, yMiddle); 
+        ctx.rotate(-Math.PI / 2);          
+        ctx.fillText("Descansito", 0, 0);
+
+        ctx.restore();
+      }
+    };
+
+    const config = {
+      type: 'bar',
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      },
+      plugins: [lineaVerticalPlugin]
+    };
+
+    new Chart(
+      document.getElementById('myChart'),
+      config
+    );
+  </script>
+</body>
+</html>
