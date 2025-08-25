@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Selector dinámico</title>
+</head>
+<body>
+  <select id="selector"></select>
+  <p id="resultado"></p>
+
+  <script>
+    // Lista en JavaScript
+    const opciones = [
+      { value: "1", text: "Opción 1" },
+      { value: "2", text: "Opción 2" },
+      { value: "3", text: "Opción 3" },
+      { value: "4", text: "Opción 4" }
+    ];
+
+    const selector = document.getElementById("selector");
+
+    // Llenar con las opciones
+    opciones.forEach(opcion => {
+      const option = document.createElement("option");
+      option.value = opcion.value;
+      option.textContent = opcion.text;
+      selector.appendChild(option);
+    });
+
+    document.getElementById("selector").addEventListener("change", function() {
+      const resultado = document.getElementById("resultado");
+      resultado.textContent = `Has seleccionado: ${this.value}`;
+    });
+
+
+
+
+    
+  </script>
+</body>
+</html>

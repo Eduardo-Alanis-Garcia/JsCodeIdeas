@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Selector dinámico</title>
+
+<style>
+      #selector {
+      padding: 6px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #fff;
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    #selector:hover {
+      border-color: #666;
+      box-shadow: 0 3px 7px rgba(0,0,0,0.15);
+    }
+
+    #selector:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 5px rgba(0,123,255,0.5);
+    }
+</style>
+
+</head>
+<body>
+  <div id="simular" style="background-color: rgb(192, 188, 188); height: 5vh; display: flex; align-items: center;">
+    <button>Historico: Hidalgo</button>
+    <button>Contexto Nacional</button>
+    <button>i</button>
+    <select id="selector" style="margin-left: auto;"></select>
+  </div>
+  <p id="resultado"></p>
+
+  <script>
+    // Lista en JavaScript
+    const opciones = [
+      { value: "1", text: "Opción 1" },
+      { value: "2", text: "Opción 2" },
+      { value: "3", text: "Opción 3" },
+      { value: "4", text: "Opción 4" }
+    ];
+
+    const selector = document.getElementById("selector");
+
+    // Llenar con las opciones
+    opciones.forEach(opcion => {
+      const option = document.createElement("option");
+      option.value = opcion.value;
+      option.textContent = opcion.text;
+      selector.appendChild(option);
+    });
+
+    document.getElementById("selector").addEventListener("change", function() {
+      const resultado = document.getElementById("resultado");
+      resultado.textContent = `Has seleccionado: ${this.value}`;
+    });
+
+
+
+
+    
+  </script>
+</body>
+</html>
