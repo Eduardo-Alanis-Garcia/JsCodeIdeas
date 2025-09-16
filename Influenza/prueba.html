@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Leaflet.timeline — Opción B (corregido)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.timeline@1.6.0/dist/leaflet.timeline.css" />
+  <style> html,body,#map { height: 100%; margin: 0; padding: 0; } </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet.timeline@1.6.0/dist/leaflet.timeline.js"></script>
+
+  <script>
+  // ----- GeoJSON ejemplo (cada feature tiene `series`) -----
+  const geojson = {
+    "type":"FeatureCollection",
+    "features":[
+      {
+        "type":"Feature",
+        "properties":{
+          "id": "Hidalgo",
+          "Estado":"Hidalgo",
+          "start":"2009-01-01",
+          "end":"2009-01-07",
+          "series":[
+            {"date":"2009-01-01","casos":1},
+            {"date":"2009-01-03","casos":4},
+            {"date":"2009-01-07","casos":2}
+          ]
+        },
+        "geometry":{"type":"Point","coordinates":[-98.88702,20.47875]}
+      },
+      {
+        "type":"Feature",
+        "properties":{
+          "id": "SLP",
+          "Estado":"San Luis Potosí",
+          "start":"2009-01-01",
+          "end":"2009-01-07",
+          "series":[
+            {"date":"2009-01-01","casos":13},
+            {"date":"2009-01-04","casos":20},
+            {"date":"2009-01-07","casos":15}
+          ]
+        },
+        "geometry":{"type":"Point","coordinates":[-100.4104,22.58427]}
+      }
+    ]
+  };
+
+  // ----- inicializar mapa -----
+  const map = L.map('map').setView([20.5, -99.5], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  // ----- helpers: parsear series e interpolar -----
+  function parseSeriesInFeature(feature) {
+    const series = (feature.properties && feature.properties.series) || [];
+    const parsed = series
+      .map(s => ({ t: new Date(s.date).getTime(), casos: Number(s.casos) }))
+      .sort((a,b) => a.t - b.t);
+    feature.properties._seriesParsed = parsed;
+    return parsed;
+  }
+
+  function casosAtTime(seriesParsed, t_ms) {
+    if (!seriesParsed || seriesParsed.length === 0) return 0;
+    const n = seriesParsed.length;
+    if (t_ms <= seriesParsed[0].t) return seriesParsed[0].casos;
+    if (t_ms >= seriesParsed[n-1].t) return seriesParsed[n-1].casos;
+    for (let i = 0; i < n - 1; i++) {
+      const a = seriesParsed[i], b = seriesParsed[i+1];
+      if (t_ms >= a.t && t_ms <= b.t) {
+        const ratio = (t_ms - a.t) / (b.t - a.t);
+        return a.casos + ratio * (b.casos - a.casos);
+      }
+    }
+    return 0;
+  }
+
+  // ----- Map para controlar qué layers están visibles en el mapa ahora -----
+  // usamos un Set para guardar referencias a los layer objects actualmente añadidos al mapa
+  const visibleLayers = new Set();
+
+  map.on('layeradd', function(e){
+    const Lyr = e.layer;
+    if (Lyr && Lyr.feature && Lyr.feature.properties) {
+      visibleLayers.add(Lyr);
+      // console.log('layer added', Lyr.feature.properties.id || Lyr.feature.properties.Estado);
+    }
+  });
+  map.on('layerremove', function(e){
+    const Lyr = e.layer;
+    if (Lyr && Lyr.feature && Lyr.feature.properties) {
+      visibleLayers.delete(Lyr);
+      // console.log('layer removed', Lyr.feature.properties.id || Lyr.feature.properties.Estado);
+    }
+  });
+
+  // ----- Crear timeline layer -----
+  const timelineLayer = L.timeline(geojson, {
+    pointToLayer: function(feature, latlng) {
+      // parsear serie si no existe
+      if (!feature.properties._seriesParsed) parseSeriesInFeature(feature);
+
+      // radio inicial (en el inicio del intervalo)
+      const initialT = new Date(feature.properties.start).getTime();
+      const initialCasos = casosAtTime(feature.properties._seriesParsed, initialT);
+      const radius = Math.max(4, Math.sqrt(initialCasos) * 4);
+
+      const marker = L.circleMarker(latlng, {
+        radius: radius,
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.8
+      });
+
+      // ponemos un id en properties y en el marker para depuración / referencia
+      const id = feature.properties.id || feature.properties.Estado || Math.random().toString(36).slice(2,9);
+      feature.properties._id = id;
+      marker._featureId = id;
+
+      marker.bindPopup(`<strong>${feature.properties.Estado}</strong><br>Casos: ${Math.round(initialCasos)}`);
+      return marker;
+    }
+  });
+
+  // ----- Slider control -----
+  const sliderControl = L.timelineSliderControl({
+    formatOutput: function(date){
+      const d = new Date(date); if (isNaN(d)) return String(date);
+      return d.toISOString().slice(0,10);
+    },
+    steps: 1000,
+    duration: 10000,
+    showTicks: true,
+    enablePlayback: true,
+    autoPlay: false
+  });
+
+  sliderControl.addTo(map);
+  sliderControl.addTimelines(timelineLayer);
+  timelineLayer.addTo(map);
+  map.fitBounds(timelineLayer.getBounds());
+
+  // ----- Handler robusto: cuando cambia el tiempo actual del timeline -----
+  timelineLayer.on('change', function(e) {
+    // e.time suele ser el timestamp actual en ms, pero por seguridad comprobamos variantes
+    const t = e && (e.time || e.timestamp || e.currentTime || e.target && e.target._currentTime) || Date.now();
+    if (!t) return;
+    // iterar solo por layers que están visibles ahora (evita capas inexistentes)
+    visibleLayers.forEach(function(layer){
+      try {
+        if (!layer.feature || !layer.feature.properties) return;
+        // parsear si por alguna razón no se parseó
+        if (!layer.feature.properties._seriesParsed) parseSeriesInFeature(layer.feature);
+        const seriesParsed = layer.feature.properties._seriesParsed;
+        const casos = casosAtTime(seriesParsed, t);
+        const newRadius = Math.max(4, Math.sqrt(Math.max(0, casos)) * 4);
+        if (layer.setStyle) {
+          layer.setStyle({ radius: newRadius });
+        } else if (layer.setRadius) {
+          layer.setRadius(newRadius);
+        }
+        // actualizar popup content (si no quieres que cambie cuando está cerrado, puedes omitir)
+        if (layer.getPopup) {
+          const popupContent = `<strong>${layer.feature.properties.Estado}</strong><br>Casos: ${casos.toFixed(1)}`;
+          layer.setPopupContent(popupContent);
+        }
+      } catch (err) {
+        console.warn('Error actualizando layer:', err);
+      }
+    });
+  });
+
+  // ----- (opcional) log para debugging: muestra tiempo cuando cambia -----
+  timelineLayer.on('change', function(e){
+    // console.log('timeline change event time =', new Date(e.time).toISOString());
+  });
+
+  </script>
+</body>
+</html>

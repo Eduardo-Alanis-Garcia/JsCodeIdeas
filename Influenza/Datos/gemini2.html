@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Casos de Influenza (Datos GeoJSON Directos)</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/iso8601-js-period@0.2.1/iso8601.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/leaflet-timedimension@1.1.1/dist/leaflet.timedimension.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-timedimension@1.1.1/dist/leaflet.timedimension.control.min.css" />
+
+    <style>
+        body { font-family: sans-serif; margin: 0; }
+        #map { height: 100vh; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <script>
+    // 2. Inicializar el mapa con la opción 'timeDimension'
+    const map = L.map('map', {
+        timeDimension: true,
+        timeDimensionControl: true,
+        timeDimensionOptions: {
+            period: "P1M" // Intervalo de 1 mes
+        }
+    }).setView([23.6, -102.5], 5); // Vista centrada en México
+
+    // 3. Añadir capa de mapa base
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // 4. Cargar los datos desde tu archivo GeoJSON
+    fetch("Influenza_timeline.geojson")
+        .then(response => response.json())
+        .then(geoJsonData => {
+
+            // El plugin necesita una propiedad "time". Tus datos usan "Fecha".
+            geoJsonData.features.forEach(feature => {
+                feature.properties.time = feature.properties.Fecha;
+            });
+
+            // 5. Crear la capa GeoJSON base
+            const geoJsonLayer = L.geoJSON(null, {
+                pointToLayer: function (feature, latlng) {
+                    const casos = feature.properties.Casos;
+                    
+                    // Si no hay casos, no dibujamos nada
+                    if (casos === 0) {
+                        return;
+                    }
+
+                    // El radio del círculo es proporcional a los casos
+                    const radius = Math.sqrt(casos) * 2;
+                    return L.circleMarker(latlng, {
+                        radius: radius,
+                        color: "#e63946",
+                        fillColor: "#f1faee",
+                        fillOpacity: 0.7
+                    });
+                },
+                onEachFeature: function (feature, layer) {
+                    const popupContent = `
+                        <strong>Estado:</strong> ${feature.properties.Estado}<br>
+                        <strong>Fecha:</strong> ${feature.properties.time}<br>
+                        <strong>Casos:</strong> ${feature.properties.Casos}
+                    `;
+                    layer.bindPopup(popupContent);
+                }
+            });
+
+            // 6. Crear la capa de tiempo y añadir los datos
+            const timeLayer = L.timeDimension.layer.geoJson(geoJsonLayer, {
+                updateTimeDimension: true,
+                addlastPoint: true,
+                duration: 'P1M',
+            });
+
+            // Añadir los datos a la capa base y la capa de tiempo al mapa
+            geoJsonLayer.addData(geoJsonData);
+            timeLayer.addTo(map);
+        })
+        .catch(error => console.error('Error al cargar el archivo GeoJSON:', error));
+</script>
+
+</body>
+</html>
