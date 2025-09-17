@@ -69,5 +69,9 @@ d = d |>
   dplyr::select(Estado, Casos, start, end, geometry)
 
 
-sf::write_sf(datos_geometria, "Datos/Influenza_no_funcional.geojson", driver = "GeoJSON")
+sf::write_sf(d, "Datos/Influenza_no_funcional.geojson", driver = "GeoJSON")
+
+df = df |> 
+  dplyr::relocate(geometry, .after = `2025-02-01`)
+sf::write_sf(df, "Datos/Prueba.geojson", driver = "GeoJSON")
 
